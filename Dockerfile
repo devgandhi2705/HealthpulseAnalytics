@@ -36,7 +36,8 @@ COPY . .
 WORKDIR /app/frontend
 
 # Production build: VITE_API_BASE_URL left empty so API calls are same-origin
-RUN npm ci && VITE_API_BASE_URL= npm run build
+# Use npm install (not npm ci) because package-lock.json is git-ignored
+RUN npm install && VITE_API_BASE_URL= npm run build
 
 WORKDIR /app
 
