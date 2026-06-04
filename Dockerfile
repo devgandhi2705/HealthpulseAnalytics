@@ -50,8 +50,11 @@ RUN mkdir -p backend/data
 ENV FRONTEND_DIST=/app/frontend/dist
 ENV LOG_LEVEL=INFO
 ENV PYTHONUNBUFFERED=1
+# Belt-and-suspenders: ensures backend/app is importable even before server.py
+# adds it to sys.path programmatically.
+ENV PYTHONPATH=/app/backend
 
 # HF Spaces requires port 7860; override with PORT env var for other platforms
 EXPOSE 7860
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "7860"]

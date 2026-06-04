@@ -1,14 +1,12 @@
 """
 Production entry point — Hugging Face Spaces & Docker.
 
-Adds the backend package to sys.path, then re-exports the FastAPI `app`
-object so uvicorn can be invoked as:
+Named server.py (not app.py) to avoid a Python module naming conflict:
+the backend package is also called 'app' (backend/app/), so a root-level
+app.py would shadow it when Python resolves 'from app.main import app'.
 
-    uvicorn app:app --host 0.0.0.0 --port 7860
-
-The React frontend is served as static files from frontend/dist/ if the
-build artefacts are present.  Run `cd frontend && npm run build` first, or
-let the Dockerfile handle it automatically.
+Start with:
+    uvicorn server:app --host 0.0.0.0 --port 7860
 """
 
 import logging
@@ -17,7 +15,7 @@ import sys
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
-# Path setup
+# Path setup — make backend/app importable as the 'app' package
 # ---------------------------------------------------------------------------
 _ROOT = Path(__file__).parent
 _BACKEND = _ROOT / "backend"
@@ -29,9 +27,11 @@ if _DIST.exists() and not os.getenv("FRONTEND_DIST"):
     os.environ["FRONTEND_DIST"] = str(_DIST)
 
 # ---------------------------------------------------------------------------
-# Import FastAPI application (triggers DB init via lifespan on first request)
+# Import FastAPI application
+# 'app' here resolves to backend/app/ (not this file) because sys.path
+# now has backend/ at position 0 and this file is server.py, not app.py.
 # ---------------------------------------------------------------------------
-from app.main import app  # noqa: E402
+from app.main import app  # noqa: E402  # type: ignore[import]
 
 logging.getLogger(__name__).info(
     "HealthPulse Analytics starting on port %s",
