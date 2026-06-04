@@ -1,21 +1,11 @@
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  Bar, BarChart, CartesianGrid, Cell,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
+import { CHART_COLORS, SOURCE_COLORS } from '../constants/colors'
 
-// Shared across all distribution charts for visual consistency.
-export const PALETTE = [
-  '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b',
-  '#ef4444', '#06b6d4', '#f97316', '#84cc16',
-]
-
-// ---- Tooltip ---------------------------------------------------------------
+// Re-export for charts that import PALETTE from here
+export const PALETTE = CHART_COLORS
 
 function BarTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -29,69 +19,42 @@ function BarTooltip({ active, payload, label }) {
   )
 }
 
-// ---- Empty state -----------------------------------------------------------
-
-function EmptyState() {
-  return (
-    <div className="chart-empty">
-      <svg className="chart-empty__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M8 17v-4M12 17v-8M16 17v-2" />
-      </svg>
-      <p>No source data yet</p>
-    </div>
-  )
-}
-
-// ---- Chart -----------------------------------------------------------------
-
-/**
- * SourceBarChart
- *
- * Props:
- *   data {Array<{ source: string, count: number, percentage: number }>}
- *        Matches the `items` array from GET /analytics/source-distribution.
- */
 export default function SourceBarChart({ data = [] }) {
-  if (!data.length) return <EmptyState />
+  if (!data.length) {
+    return (
+      <div className="chart-empty">
+        <svg className="chart-empty__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <path d="M8 17v-4M12 17v-8M16 17v-2" />
+        </svg>
+        <p>No source data yet</p>
+      </div>
+    )
+  }
 
-  // Grow the chart height with the number of sources so bars stay readable.
-  const chartHeight = Math.max(220, data.length * 44 + 48)
+  const chartH = Math.max(220, data.length * 52 + 40)
 
   return (
-    <ResponsiveContainer width="100%" height={chartHeight}>
-      <BarChart
-        data={data}
-        layout="vertical"
-        margin={{ top: 4, right: 16, bottom: 4, left: 8 }}
-      >
-        <CartesianGrid
-          strokeDasharray="3 3"
-          horizontal={false}
-          stroke="#f3f4f6"
-        />
+    <ResponsiveContainer width="100%" height={chartH}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
         <XAxis
-          type="number"
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 11, fill: '#9ca3af' }}
+          type="number" axisLine={false} tickLine={false}
+          tick={{ fontSize: 11, fill: '#94A3B8' }}
           tickFormatter={(v) => v.toLocaleString()}
         />
         <YAxis
-          type="category"
-          dataKey="source"
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 12, fill: '#374151', fontWeight: 500 }}
-          width={80}
+          type="category" dataKey="source" axisLine={false} tickLine={false}
+          tick={{ fontSize: 12, fill: '#475569', fontWeight: 600 }}
+          width={86}
         />
-        <Tooltip
-          content={<BarTooltip />}
-          cursor={{ fill: '#f9fafb' }}
-        />
-        <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={26}>
-          {data.map((entry, i) => (
-            <Cell key={entry.source} fill={PALETTE[i % PALETTE.length]} />
+        <Tooltip content={<BarTooltip />} cursor={{ fill: '#F8FAFC' }} />
+        <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={28}>
+          {data.map((entry) => (
+            <Cell
+              key={entry.source}
+              fill={SOURCE_COLORS[entry.source] ?? CHART_COLORS[0]}
+            />
           ))}
         </Bar>
       </BarChart>

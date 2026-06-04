@@ -1,44 +1,42 @@
-/**
- * KpiCard — a single metric display card.
- *
- * Props:
- *   label   {string}      — metric name, e.g. "Total Articles"
- *   value   {number|string} — the metric value; numbers are formatted with toLocaleString
- *   icon    {ReactNode}   — SVG or element shown in the accent icon area
- *   accent  {string}      — CSS colour used for the top border and icon tint (default blue)
- *   loading {boolean}     — show shimmer skeleton instead of real data (default false)
- */
+import { SkeletonCard } from './ui/Skeleton'
+
+function TrendTag({ value }) {
+  if (value == null) return null
+  const positive = value >= 0
+  const cls = positive ? 'kpi-trend--up' : 'kpi-trend--down'
+  return (
+    <span className={`kpi-trend ${cls}`}>
+      {positive ? '↑' : '↓'} {Math.abs(value).toLocaleString()}
+    </span>
+  )
+}
+
 export default function KpiCard({
   label,
   value,
   icon,
-  accent = '#3b82f6',
-  loading = false,
+  accent   = '#1E40AF',
+  trend,
+  sublabel,
+  loading  = false,
 }) {
+  if (loading) return <SkeletonCard />
+
+  const isText = typeof value === 'string'
+
   return (
     <div className="kpi-card" style={{ '--kpi-accent': accent }}>
-      {loading ? (
-        <Skeleton />
-      ) : (
-        <>
-          <div className="kpi-card__header">
-            {icon && <span className="kpi-card__icon">{icon}</span>}
-            <span className="kpi-card__label">{label}</span>
-          </div>
-          <p className="kpi-card__value">
-            {typeof value === 'number' ? value.toLocaleString() : (value ?? '—')}
-          </p>
-        </>
-      )}
-    </div>
-  )
-}
-
-function Skeleton() {
-  return (
-    <div className="kpi-skeleton">
-      <div className="kpi-skeleton__label shimmer" />
-      <div className="kpi-skeleton__value shimmer" />
+      <div className="kpi-card__icon-wrap">{icon}</div>
+      <div className="kpi-card__body">
+        <p className="kpi-card__label">{label}</p>
+        <p className={`kpi-card__value${isText ? ' kpi-card__value--text' : ''}`}>
+          {typeof value === 'number'
+            ? value.toLocaleString()
+            : (value ?? '—')}
+        </p>
+        {sublabel && <p className="kpi-card__sublabel">{sublabel}</p>}
+      </div>
+      {trend != null && <TrendTag value={trend} />}
     </div>
   )
 }

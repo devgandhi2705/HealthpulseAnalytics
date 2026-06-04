@@ -1,119 +1,107 @@
+import { useMemo, useState } from 'react'
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
+  Area, AreaChart, CartesianGrid, ResponsiveContainer,
+  Tooltip, XAxis, YAxis,
 } from 'recharts'
 
-const STROKE = '#3b82f6'
-const GRADIENT_ID = 'dailyTrendFill'
+const STROKE     = '#1E40AF'
+const GRADIENT   = 'trendGrad'
 
-// Append 'T00:00:00' to avoid UTC-to-local shifts when parsing date-only strings.
-function formatAxisDate(dateStr) {
+const RANGES = [
+  { label: '7D',  days: 7   },
+  { label: '30D', days: 30  },
+  { label: '90D', days: 90  },
+  { label: 'All', days: null },
+]
+
+function formatLabel(dateStr) {
   const d = new Date(`${dateStr}T00:00:00`)
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
-
-// ---- Tooltip ---------------------------------------------------------------
 
 function TrendTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
     <div className="chart-tooltip">
       <p className="chart-tooltip__label">{label}</p>
-      <p className="chart-tooltip__value">
-        {payload[0].value.toLocaleString()} articles
-      </p>
+      <p className="chart-tooltip__value">{payload[0].value.toLocaleString()} articles</p>
     </div>
   )
 }
 
-// ---- Empty state -----------------------------------------------------------
-
-function EmptyState() {
-  return (
-    <div className="chart-empty">
-      <svg className="chart-empty__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-      </svg>
-      <p>No trend data yet</p>
-    </div>
-  )
-}
-
-// ---- Chart -----------------------------------------------------------------
-
-/**
- * DailyTrendChart — area chart of published articles per day.
- *
- * Props:
- *   data {Array<{ date: string, count: number }>}
- *        Matches the `items` array from GET /analytics/daily-trend.
- *        `date` is an ISO date string e.g. "2025-05-14".
- */
 export default function DailyTrendChart({ data = [] }) {
-  if (!data.length) return <EmptyState />
+  const [range, setRange] = useState(RANGES[1]) // default 30D
 
-  const formatted = data.map((item) => ({
-    ...item,
-    label: formatAxisDate(item.date),
-  }))
+  const filtered = useMemo(() => {
+    if (!range.days) return data
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - range.days)
+    return data.filter((d) => new Date(`${d.date}T00:00:00`) >= cutoff)
+  }, [data, range])
+
+  const formatted = useMemo(
+    () => filtered.map((d) => ({ ...d, label: formatLabel(d.date) })),
+    [filtered],
+  )
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
-      <AreaChart
-        data={formatted}
-        margin={{ top: 4, right: 16, bottom: 0, left: 0 }}
-      >
-        <defs>
-          <linearGradient id={GRADIENT_ID} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor={STROKE} stopOpacity={0.15} />
-            <stop offset="95%" stopColor={STROKE} stopOpacity={0} />
-          </linearGradient>
-        </defs>
+    <div>
+      {/* Range filter tabs */}
+      <div className="time-filters" style={{ marginBottom: 16 }}>
+        {RANGES.map((r) => (
+          <button
+            key={r.label}
+            className={`time-filter-btn${range.label === r.label ? ' time-filter-btn--active' : ''}`}
+            onClick={() => setRange(r)}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
 
-        <CartesianGrid
-          strokeDasharray="3 3"
-          vertical={false}
-          stroke="#f3f4f6"
-        />
-        <XAxis
-          dataKey="label"
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 11, fill: '#9ca3af' }}
-          interval="preserveStartEnd"
-          minTickGap={40}
-        />
-        <YAxis
-          axisLine={false}
-          tickLine={false}
-          tick={{ fontSize: 11, fill: '#9ca3af' }}
-          tickFormatter={(v) => v.toLocaleString()}
-          width={36}
-          allowDecimals={false}
-        />
-        <Tooltip
-          content={<TrendTooltip />}
-          cursor={{
-            stroke: STROKE,
-            strokeWidth: 1,
-            strokeDasharray: '4 4',
-          }}
-        />
-        <Area
-          type="monotone"
-          dataKey="count"
-          stroke={STROKE}
-          strokeWidth={2}
-          fill={`url(#${GRADIENT_ID})`}
-          dot={false}
-          activeDot={{ r: 4, fill: STROKE, strokeWidth: 2, stroke: '#fff' }}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+      {formatted.length === 0 ? (
+        <div className="chart-empty">
+          <svg className="chart-empty__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          <p>No data for this range</p>
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={260}>
+          <AreaChart data={formatted} margin={{ top: 4, right: 12, bottom: 0, left: -4 }}>
+            <defs>
+              <linearGradient id={GRADIENT} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={STROKE} stopOpacity={0.18} />
+                <stop offset="95%" stopColor={STROKE} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+            <XAxis
+              dataKey="label"
+              axisLine={false} tickLine={false}
+              tick={{ fontSize: 11, fill: '#94A3B8' }}
+              interval="preserveStartEnd" minTickGap={40}
+            />
+            <YAxis
+              axisLine={false} tickLine={false}
+              tick={{ fontSize: 11, fill: '#94A3B8' }}
+              tickFormatter={(v) => v.toLocaleString()}
+              width={34} allowDecimals={false}
+            />
+            <Tooltip
+              content={<TrendTooltip />}
+              cursor={{ stroke: STROKE, strokeWidth: 1, strokeDasharray: '4 4' }}
+            />
+            <Area
+              type="monotone" dataKey="count"
+              stroke={STROKE} strokeWidth={2.5}
+              fill={`url(#${GRADIENT})`}
+              dot={false}
+              activeDot={{ r: 5, fill: STROKE, strokeWidth: 2, stroke: '#fff' }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      )}
+    </div>
   )
 }
