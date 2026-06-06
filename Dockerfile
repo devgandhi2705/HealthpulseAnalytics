@@ -44,8 +44,11 @@ WORKDIR /app
 # ---------------------------------------------------------------------------
 # Runtime setup
 # ---------------------------------------------------------------------------
-# Create the SQLite data directory (persists across restarts via a volume)
-RUN mkdir -p backend/data
+# On HuggingFace Spaces, /data is the persistent storage mount point (enable
+# "Persistent Storage" in the Space settings). The app auto-detects the
+# environment via SPACE_ID and writes the SQLite DB there.
+# For local Docker use, mount a host directory: -v /host/data:/data
+VOLUME ["/data"]
 
 ENV FRONTEND_DIST=/app/frontend/dist
 ENV LOG_LEVEL=INFO

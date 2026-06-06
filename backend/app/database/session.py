@@ -8,19 +8,22 @@ from sqlalchemy.orm import Session, sessionmaker
 # ---------------------------------------------------------------------------
 # Database URL
 # ---------------------------------------------------------------------------
-# Default to SQLite for local development.
-# Set DATABASE_URL env var to a PostgreSQL DSN (postgresql+psycopg2://...)
-# to switch databases without changing any other code.
+# Priority (highest → lowest):
+#   1. DATABASE_URL env var  — any dialect (SQLite, PostgreSQL, …)
+#   2. /data/healthpulse.db  — HuggingFace Spaces persistent volume (SPACE_ID is set)
+#   3. backend/data/healthpulse.db — local development fallback
 
-_BACKEND_DIR = Path(__file__).resolve().parents[2]  # backend/
-_DEFAULT_DB = _BACKEND_DIR / "data" / "healthpulse.db"
+def _default_sqlite_url() -> str:
+    # HF Spaces sets SPACE_ID; /data is the persistent storage mount point.
+    db_path = (
+        Path("/data/healthpulse.db")
+        if os.getenv("SPACE_ID")
+        else Path(__file__).resolve().parents[2] / "data" / "healthpulse.db"
+    )
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    return f"sqlite:///{db_path}"
 
-# Auto-create the data directory so the app starts on a fresh machine
-# without any manual folder creation step.
-if not os.getenv("DATABASE_URL"):
-    _DEFAULT_DB.parent.mkdir(parents=True, exist_ok=True)
-
-DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{_DEFAULT_DB}")
+DATABASE_URL: str = os.getenv("DATABASE_URL") or _default_sqlite_url()
 
 # ---------------------------------------------------------------------------
 # Engine
