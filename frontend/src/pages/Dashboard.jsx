@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import ArticleCard from '../components/ArticleCard'
 import CategoryPieChart from '../components/CategoryPieChart'
 import DailyTrendChart from '../components/DailyTrendChart'
@@ -66,11 +66,15 @@ function HashIcon() {
 
 // ---- Source Leaderboard (sidebar of Source section) -----------------------
 
+const LEADERBOARD_DEFAULT = 5
+
 function SourceLeaderboard({ data = [], loading }) {
+  const [expanded, setExpanded] = useState(false)
+
   if (loading) {
     return (
       <div className="source-leaderboard">
-        {Array.from({ length: 4 }, (_, i) => (
+        {Array.from({ length: LEADERBOARD_DEFAULT }, (_, i) => (
           <div key={i} className="skeleton shimmer" style={{ height: 52, borderRadius: 10 }} />
         ))}
       </div>
@@ -82,30 +86,33 @@ function SourceLeaderboard({ data = [], loading }) {
   }
 
   const maxCount = data[0]?.count ?? 1
+  const visible = expanded ? data : data.slice(0, LEADERBOARD_DEFAULT)
+  const remaining = data.length - LEADERBOARD_DEFAULT
+
   return (
     <div className="source-leaderboard">
-      {data.map((item, i) => {
+      {visible.map((item, i) => {
         const color = SOURCE_COLORS[item.source] ?? '#1E40AF'
         return (
-          <div
-            className="source-row"
-            key={item.source}
-            style={{ '--source-color': color }}
-          >
+          <div className="source-row" key={item.source} style={{ '--source-color': color }}>
             <span className="source-row__rank">#{i + 1}</span>
             <span className="source-row__dot" />
             <span className="source-row__name">{item.source}</span>
             <div className="source-row__bar-wrap">
-              <div
-                className="source-row__bar"
-                style={{ width: `${(item.count / maxCount) * 100}%` }}
-              />
+              <div className="source-row__bar" style={{ width: `${(item.count / maxCount) * 100}%` }} />
             </div>
             <span className="source-row__count">{item.count.toLocaleString()}</span>
             <span className="source-row__pct">{item.percentage}%</span>
           </div>
         )
       })}
+      {remaining > 0 && (
+        <button className="leaderboard-toggle" onClick={() => setExpanded((e) => !e)}>
+          {expanded
+            ? 'Show less'
+            : `Show ${remaining} more publisher${remaining !== 1 ? 's' : ''}`}
+        </button>
+      )}
     </div>
   )
 }

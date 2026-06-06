@@ -32,11 +32,25 @@ export default function SourceBarChart({ data = [] }) {
     )
   }
 
-  const chartH = Math.max(220, data.length * 52 + 40)
+  // Top 4 sources + aggregate the rest into a single "Other" bar
+  const top = data.slice(0, 4)
+  const rest = data.slice(4)
+  const chartData = rest.length > 0
+    ? [
+        ...top,
+        {
+          source: 'Other',
+          count: rest.reduce((s, d) => s + d.count, 0),
+          percentage: rest.reduce((s, d) => s + parseFloat(d.percentage), 0).toFixed(1),
+        },
+      ]
+    : top
+
+  const chartH = Math.max(220, chartData.length * 52 + 40)
 
   return (
     <ResponsiveContainer width="100%" height={chartH}>
-      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
+      <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, bottom: 4, left: 8 }}>
         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
         <XAxis
           type="number" axisLine={false} tickLine={false}
@@ -50,10 +64,10 @@ export default function SourceBarChart({ data = [] }) {
         />
         <Tooltip content={<BarTooltip />} cursor={{ fill: '#F8FAFC' }} />
         <Bar dataKey="count" radius={[0, 6, 6, 0]} maxBarSize={28}>
-          {data.map((entry) => (
+          {chartData.map((entry) => (
             <Cell
               key={entry.source}
-              fill={SOURCE_COLORS[entry.source] ?? CHART_COLORS[0]}
+              fill={entry.source === 'Other' ? '#94A3B8' : (SOURCE_COLORS[entry.source] ?? CHART_COLORS[0])}
             />
           ))}
         </Bar>

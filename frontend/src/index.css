@@ -419,7 +419,7 @@ img { display: block; max-width: 100%; }
   padding: var(--s5) var(--s5);
   box-shadow: var(--shadow-sm);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--s4);
   transition: transform var(--ease), box-shadow var(--ease);
   min-height: 88px;
@@ -436,6 +436,7 @@ img { display: block; max-width: 100%; }
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   color: var(--kpi-accent, var(--c-primary));
+  margin-top: 2px;
 }
 .kpi-card__icon-wrap svg { width: 20px; height: 20px; }
 
@@ -448,20 +449,15 @@ img { display: block; max-width: 100%; }
   letter-spacing: 0.07em;
   color: var(--c-text-muted);
   margin-bottom: var(--s1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .kpi-card__value {
   font-size: 1.7rem;
   font-weight: 800;
   color: var(--c-text-primary);
-  line-height: 1;
+  line-height: 1.1;
   letter-spacing: -0.03em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .kpi-card__value--text {
@@ -801,6 +797,25 @@ img { display: block; max-width: 100%; }
   width: 34px; text-align: right; flex-shrink: 0;
 }
 
+.leaderboard-toggle {
+  width: 100%;
+  margin-top: var(--s2);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--r-md);
+  border: 1px dashed var(--c-border);
+  background: none;
+  color: var(--c-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--ease), border-color var(--ease);
+}
+.leaderboard-toggle:hover {
+  background: var(--c-primary-muted);
+  border-color: var(--c-primary-light);
+}
+
 /* ============================================================
    INSIGHT CARDS (EDA)
    ============================================================ */
@@ -846,9 +861,7 @@ img { display: block; max-width: 100%; }
   font-weight: 800;
   color: var(--c-text-primary);
   line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .insight-card__sub {
