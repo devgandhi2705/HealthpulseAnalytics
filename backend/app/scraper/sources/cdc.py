@@ -40,12 +40,38 @@ class CDCScraper(BaseScraper):
     BASE_URL         = _NEWS_URL
 
     def scrape(self) -> list[ScrapedArticle]:
-        self.logger.info("Scraping %s", self.BASE_URL)
+        self.logger.info("[%s] Fetching %s", self.SOURCE_NAME, self.BASE_URL)
+
         html = self._fetch(self.BASE_URL)
+
         if html is None:
+            self.logger.warning(
+                "[%s] FETCH FAILED | status=%s | url=%s",
+                self.SOURCE_NAME,
+                self._last_http_status or "network_error",
+                self.BASE_URL,
+            )
             return []
+
+        self.logger.info(
+            "[%s] Fetch OK    | status=%d | size=%s bytes",
+            self.SOURCE_NAME,
+            self._last_http_status,
+            f"{self._last_response_bytes:,}",
+        )
+
         articles = self._parse(html)
-        self.logger.info("Found %d articles from %s", len(articles), self.SOURCE_NAME)
+
+        skipped = self._last_cards_found - len(articles)
+        self.logger.info(
+            "[%s] ── Summary ── status=%-3d | size=%-10s | cards=%-3d | extracted=%-3d%s",
+            self.SOURCE_NAME,
+            self._last_http_status or 0,
+            f"{self._last_response_bytes:,}",
+            self._last_cards_found,
+            len(articles),
+            f" | skipped={skipped}" if skipped > 0 else "",
+        )
         return articles
 
     # ------------------------------------------------------------------
@@ -55,11 +81,23 @@ class CDCScraper(BaseScraper):
     def _parse(self, html: str) -> list[ScrapedArticle]:
         soup       = BeautifulSoup(html, "html.parser")
         containers = soup.select(_CONTAINER)
+        self._last_cards_found = len(containers)
+
+        self.logger.debug(
+            "[%s] Selector %r matched %d element(s)",
+            self.SOURCE_NAME, _CONTAINER, len(containers),
+        )
 
         if not containers:
+            page_title = (
+                soup.title.string.strip()
+                if soup.title and soup.title.string
+                else "(no <title>)"
+            )
             self.logger.warning(
-                "No containers matched %r — CDC page structure may have changed.",
-                _CONTAINER,
+                "[%s] ZERO CARDS — selector %r returned nothing. "
+                "Page title: %r  (page structure may have changed or request was blocked)",
+                self.SOURCE_NAME, _CONTAINER, page_title,
             )
 
         results: list[ScrapedArticle] = []

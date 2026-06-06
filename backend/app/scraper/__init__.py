@@ -1,44 +1,47 @@
 """
-Scraper registry.
+Scraper registry — keyword-driven Google News RSS pipeline.
 
-To add a new source:
-  1. Create app/scraper/sources/<name>.py with a class that extends BaseScraper.
-  2. Import it below and add one entry to SCRAPER_REGISTRY.
+Architecture
+------------
+Each healthcare keyword maps to one GoogleNewsRSSScraper instance.
+The scraper fetches the Google News RSS feed for that keyword and
+returns ScrapedArticle objects where:
 
-Nothing else needs to change.
+  source   = publisher name  (e.g. "Reuters", "The Guardian")
+  category = search keyword  (e.g. "healthcare", "telemedicine")
+
+This mapping preserves full backward-compatibility with all existing
+analytics endpoints:
+  /analytics/source-distribution  → publisher coverage
+  /analytics/category-distribution → keyword distribution
+
+To change the keyword set, edit app/scraper/keywords.py.
 """
 
-from app.scraper.base import BaseScraper, ScrapedArticle
-from app.scraper.sources.cdc import CDCScraper
-from app.scraper.sources.healthit import HealthITScraper
-from app.scraper.sources.nih import NIHScraper
-from app.scraper.sources.who import WHOScraper
-
-# Maps source name → scraper class.
-# To add a new source: create sources/<name>.py and add one line here.
-SCRAPER_REGISTRY: dict[str, type[BaseScraper]] = {
-    WHOScraper.SOURCE_NAME:      WHOScraper,
-    CDCScraper.SOURCE_NAME:      CDCScraper,
-    NIHScraper.SOURCE_NAME:      NIHScraper,
-    HealthITScraper.SOURCE_NAME: HealthITScraper,
-}
+from app.scraper.base import ScrapedArticle
+from app.scraper.keywords import HEALTHCARE_KEYWORDS
+from app.scraper.rss import GoogleNewsRSSScraper
 
 
-def get_all_scrapers() -> list[BaseScraper]:
-    """Return one initialised instance of every registered scraper."""
-    return [cls() for cls in SCRAPER_REGISTRY.values()]
+def get_all_scrapers() -> list[GoogleNewsRSSScraper]:
+    """Return one initialised RSS scraper per healthcare keyword."""
+    return [GoogleNewsRSSScraper(keyword) for keyword in HEALTHCARE_KEYWORDS]
 
 
-def get_scraper(source_name: str) -> BaseScraper:
-    """Return an initialised scraper for *source_name*, or raise KeyError."""
-    cls = SCRAPER_REGISTRY[source_name]
-    return cls()
+def get_scraper(keyword: str) -> GoogleNewsRSSScraper:
+    """Return an initialised scraper for *keyword*, or raise ValueError."""
+    if keyword not in HEALTHCARE_KEYWORDS:
+        raise ValueError(
+            f"Unknown keyword {keyword!r}. "
+            f"Valid keywords: {HEALTHCARE_KEYWORDS}"
+        )
+    return GoogleNewsRSSScraper(keyword)
 
 
 __all__ = [
-    "BaseScraper",
     "ScrapedArticle",
-    "SCRAPER_REGISTRY",
+    "GoogleNewsRSSScraper",
+    "HEALTHCARE_KEYWORDS",
     "get_all_scrapers",
     "get_scraper",
 ]

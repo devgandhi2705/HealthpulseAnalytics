@@ -45,7 +45,7 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 _raw_origins = os.getenv(
     "CORS_ORIGINS",
-    "http://localhost:3000,http://localhost:5173",
+    "http://localhost:3000,http://localhost:5173,http://localhost:7860,http://127.0.0.1:7860",
 )
 origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 
@@ -68,7 +68,20 @@ _dist_env = os.getenv("FRONTEND_DIST", "")
 _dist = Path(_dist_env) if _dist_env else Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
 if _dist.exists():
+    from fastapi.responses import FileResponse  # noqa: E402
     from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-    app.mount("/", StaticFiles(directory=str(_dist), html=True), name="static")
+    # Serve Vite's JS/CSS chunks from /assets — registered AFTER the API router
+    # so no API path can ever be shadowed.
+    _assets = _dist / "assets"
+    if _assets.exists():
+        app.mount("/assets", StaticFiles(directory=str(_assets)), name="vite-assets")
+
+    # Catch-all for SPA client-side routes (e.g. /articles, /dashboard).
+    # Because this is added after app.include_router(router), every real API
+    # route is matched first; only truly unmatched paths reach here.
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def _spa(full_path: str):  # noqa: F811
+        return FileResponse(str(_dist / "index.html"))
+
     logger.info("Serving frontend static files from %s", _dist)

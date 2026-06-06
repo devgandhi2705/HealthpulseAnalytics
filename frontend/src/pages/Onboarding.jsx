@@ -140,8 +140,9 @@ export default function Onboarding({ onComplete }) {
         {/* Heading */}
         <h1 className="ob-title">Welcome to HealthPulse Analytics</h1>
         <p className="ob-subtitle">
-          Real-time intelligence from WHO, CDC, NIH, and HealthIT.gov — all in one place.
-          Your database is empty. Click below to collect your first batch of articles.
+          Keyword-driven healthcare news intelligence — collecting articles across
+          10 topics from hundreds of publishers via Google News.
+          Your database is empty. Click below to run the first collection.
         </p>
 
         {/* Error banner */}

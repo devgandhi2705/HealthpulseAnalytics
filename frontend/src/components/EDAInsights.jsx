@@ -97,7 +97,8 @@ export default function EDAInsights({
       .reduce((s, d) => s + d.count, 0)
 
     return {
-      mostActive:  overview.most_active_source,
+      mostActive:      overview.most_active_source?.source ?? null,
+      mostActiveCount: overview.most_active_source?.count  ?? null,
       velocity,
       topCatPct,
       latestDate,
@@ -119,21 +120,21 @@ export default function EDAInsights({
     <div className="insight-grid">
       <InsightCard
         icon={<ActivityIcon />}
-        label="Most Active Source"
+        label="Top Publisher"
         value={insights.mostActive}
-        sub={`${sourceDist.find(s => s.source === insights.mostActive)?.count?.toLocaleString() ?? ''} articles`}
+        sub={insights.mostActiveCount != null ? `${insights.mostActiveCount.toLocaleString()} articles` : ''}
         accentBg="#DBEAFE" accentColor="#1E40AF"
       />
       <InsightCard
         icon={<ZapIcon />}
-        label="Publication Velocity"
+        label="Collection Velocity"
         value={`${insights.velocity}/day`}
         sub="30-day rolling average"
         accentBg="#D1FAE5" accentColor="#065F46"
       />
       <InsightCard
         icon={<PieIcon />}
-        label="Top Category Share"
+        label="Top Keyword Share"
         value={insights.topCatPct != null ? `${insights.topCatPct}%` : '—'}
         sub={categoryDist[0]?.category ?? ''}
         accentBg="#CFFAFE" accentColor="#155E75"
@@ -142,7 +143,7 @@ export default function EDAInsights({
         icon={<CalendarIcon />}
         label="This Week"
         value={insights.thisWeek.toLocaleString()}
-        sub="articles published"
+        sub="articles collected"
         accentBg="#FEF3C7" accentColor="#92400E"
       />
       <InsightCard

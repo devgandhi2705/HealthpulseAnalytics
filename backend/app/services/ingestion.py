@@ -112,19 +112,43 @@ class IngestionService:
         articles: list[ScrapedArticle],
     ) -> tuple[list[ScrapedArticle], int]:
         """
-        Strip duplicate URLs from the incoming list.
-        Returns (unique_articles, duplicate_count).
-        First occurrence of a URL wins.
+        Strip duplicates from the incoming list.
+
+        Two deduplication passes are applied so the same article is never
+        stored twice even when Google News assigns different redirect URLs
+        to the same piece of content across keyword searches:
+
+        1. Primary   — exact URL match (fast set lookup).
+        2. Secondary — (normalised_title, normalised_source) fingerprint,
+                       catching identical articles with distinct redirect URLs.
+
+        First occurrence wins in both passes.
         """
-        seen: set[str] = set()
+        seen_urls: set[str] = set()
+        seen_fingerprints: set[tuple[str, str]] = set()
         unique: list[ScrapedArticle] = []
         dups = 0
+
         for article in articles:
-            if article.url in seen:
+            # Pass 1: URL uniqueness
+            if article.url in seen_urls:
                 dups += 1
-            else:
-                seen.add(article.url)
-                unique.append(article)
+                continue
+
+            # Pass 2: (title, publisher) fingerprint — guards against different
+            # Google News redirect URLs pointing to the same story.
+            fp = (
+                article.title.lower().strip()[:120],
+                (article.source or "").lower().strip(),
+            )
+            if fp in seen_fingerprints:
+                dups += 1
+                continue
+
+            seen_urls.add(article.url)
+            seen_fingerprints.add(fp)
+            unique.append(article)
+
         return unique, dups
 
     def _fetch_existing_urls(self, urls: set[str]) -> set[str]:

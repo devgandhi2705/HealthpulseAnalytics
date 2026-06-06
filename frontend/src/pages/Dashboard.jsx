@@ -6,9 +6,7 @@ import EDAInsights from '../components/EDAInsights'
 import KeywordChart from '../components/KeywordChart'
 import SourceBarChart from '../components/SourceBarChart'
 import ChartWrapper from '../components/ui/ChartWrapper'
-import { SkeletonCard } from '../components/ui/Skeleton'
 import KpiCard from '../components/KpiCard'
-import useAnalytics from '../hooks/useAnalytics'
 import useArticles from '../hooks/useArticles'
 import useEDA from '../hooks/useEDA'
 import { SOURCE_COLORS } from '../constants/colors'
@@ -138,10 +136,16 @@ function LatestHeadlines() {
 
 // ---- Dashboard (main export) ----------------------------------------------
 
-export default function Dashboard() {
+export default function Dashboard({ analytics = {} }) {
   const {
-    loading, error, overview, sourceDist, categoryDist, trend, refetch,
-  } = useAnalytics()
+    loading = false,
+    error = null,
+    overview = null,
+    sourceDist = [],
+    categoryDist = [],
+    trend = [],
+    refetch = () => {},
+  } = analytics
 
   const {
     loading: edaLoading, error: edaError, keywords,
@@ -183,13 +187,13 @@ export default function Dashboard() {
       accent: '#1E40AF',
     },
     {
-      label: 'Active Sources',
+      label: 'Publishers Tracked',
       value: overview?.sources_count,
       icon: <GlobeIcon />,
       accent: '#10B981',
     },
     {
-      label: 'Categories Tracked',
+      label: 'Keywords Monitored',
       value: overview?.categories_count,
       icon: <TagIcon />,
       accent: '#06B6D4',
@@ -201,13 +205,13 @@ export default function Dashboard() {
       accent: '#F59E0B',
     },
     {
-      label: 'Most Active Source',
-      value: overview?.most_active_source,
+      label: 'Most Active Publisher',
+      value: overview?.most_active_source?.source ?? null,
       icon: <StarIcon />,
       accent: '#8B5CF6',
     },
     {
-      label: 'Top Category',
+      label: 'Top Keyword',
       value: topCategory,
       icon: <HashIcon />,
       accent: '#4F46E5',
@@ -220,7 +224,7 @@ export default function Dashboard() {
       <div className="page-title-row">
         <h1 className="page-title">Healthcare Intelligence Overview</h1>
         <p className="page-subtitle">
-          Aggregated from WHO, CDC, NIH &amp; HealthIT.gov · {overview?.total_articles?.toLocaleString() ?? '…'} articles indexed
+          Keyword-driven news intelligence · {overview?.total_articles?.toLocaleString() ?? '…'} articles from {overview?.sources_count?.toLocaleString() ?? '…'} publishers across {overview?.categories_count?.toLocaleString() ?? '…'} topics
         </p>
       </div>
 
@@ -238,7 +242,7 @@ export default function Dashboard() {
         <div className="section-header">
           <div>
             <h2 className="section-title">Publication Intelligence</h2>
-            <p className="section-subtitle">Trend analysis and source contribution</p>
+            <p className="section-subtitle">Article volume over time and top publishers</p>
           </div>
         </div>
         <div className="panel-grid panel-grid--2col">
@@ -246,7 +250,7 @@ export default function Dashboard() {
             <div className="panel__header">
               <div>
                 <p className="panel__title">Daily Publishing Trend</p>
-                <p className="panel__subtitle">Articles published per day</p>
+                <p className="panel__subtitle">Articles collected per day</p>
               </div>
             </div>
             <ChartWrapper loading={loading} empty={!trend.length}>
@@ -257,8 +261,8 @@ export default function Dashboard() {
           <div className="panel">
             <div className="panel__header">
               <div>
-                <p className="panel__title">Source Leaderboard</p>
-                <p className="panel__subtitle">Articles by news organization</p>
+                <p className="panel__title">Publisher Leaderboard</p>
+                <p className="panel__subtitle">Article volume by news outlet</p>
               </div>
             </div>
             <SourceLeaderboard data={sourceDist} loading={loading} />
@@ -266,18 +270,19 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* ── Section 3: Content Analysis ── */}
+      {/* ── Section 3: Topic Intelligence ── */}
       <section className="section">
         <div className="section-header">
           <div>
-            <h2 className="section-title">Content Analysis</h2>
-            <p className="section-subtitle">Category breakdown and keyword intelligence</p>
+            <h2 className="section-title">Topic Intelligence</h2>
+            <p className="section-subtitle">Keyword coverage and emerging terms</p>
           </div>
         </div>
         <div className="panel-grid panel-grid--2col">
           <div className="panel">
             <div className="panel__header">
-              <p className="panel__title">Category Distribution</p>
+              <p className="panel__title">Keyword Distribution</p>
+              <p className="panel__subtitle">Articles collected per search keyword</p>
             </div>
             <ChartWrapper loading={loading} empty={!categoryDist.length}>
               <CategoryPieChart data={categoryDist} />
@@ -287,8 +292,8 @@ export default function Dashboard() {
           <div className="panel">
             <div className="panel__header">
               <div>
-                <p className="panel__title">Keyword Intelligence</p>
-                <p className="panel__subtitle">Top 20 terms across all articles</p>
+                <p className="panel__title">Term Frequency</p>
+                <p className="panel__subtitle">Top 20 terms from titles and summaries</p>
               </div>
             </div>
             <KeywordChart data={keywords} loading={edaLoading} error={edaError} />
@@ -296,12 +301,12 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* ── Section 4: Source Coverage (full-width bar chart) ── */}
+      {/* ── Section 4: Publisher Coverage (full-width bar chart) ── */}
       <section className="section">
         <div className="section-header">
           <div>
-            <h2 className="section-title">Source Coverage</h2>
-            <p className="section-subtitle">Volume comparison across all monitored organizations</p>
+            <h2 className="section-title">Publisher Coverage</h2>
+            <p className="section-subtitle">Article volume across all tracked news outlets</p>
           </div>
         </div>
         <div className="panel">
@@ -316,7 +321,7 @@ export default function Dashboard() {
         <div className="section-header">
           <div>
             <h2 className="section-title">Intelligence Insights</h2>
-            <p className="section-subtitle">Computed analytics at a glance</p>
+            <p className="section-subtitle">Derived metrics from the keyword pipeline</p>
           </div>
         </div>
         <EDAInsights
@@ -333,7 +338,7 @@ export default function Dashboard() {
         <div className="section-header">
           <div>
             <h2 className="section-title">Latest Headlines</h2>
-            <p className="section-subtitle">Most recently published articles</p>
+            <p className="section-subtitle">Most recently collected healthcare articles</p>
           </div>
         </div>
         <LatestHeadlines />

@@ -81,7 +81,7 @@ def _background_scrape() -> None:
 
         _state.update({
             "phase": "collecting",
-            "message": "Fetching articles from WHO, CDC, NIH, HealthIT.gov…",
+            "message": f"Querying Google News RSS for {len(scrapers)} healthcare keywords…",
         })
 
         all_articles = []

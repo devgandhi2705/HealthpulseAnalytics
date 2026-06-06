@@ -1,26 +1,16 @@
 import axios from 'axios'
 
-/**
- * Central axios instance.
- *
- * Development  : set VITE_API_BASE_URL=http://localhost:8000 in .env
- *                Vite's proxy also handles /api → :8000 as a fallback.
- *
- * Production   : leave VITE_API_BASE_URL empty when the frontend is served
- *                from the same origin as the FastAPI backend (e.g. Docker /
- *                Hugging Face Spaces).  Axios will use relative paths so
- *                requests hit the same host automatically.
- *
- * External API : set VITE_API_BASE_URL=https://api.example.com to point to
- *                a separately deployed backend.
- */
 const api = axios.create({
-  // Empty string = same-origin (production).  Explicit URL = cross-origin (dev/external).
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '',
-  headers: {
-    'Content-Type': 'application/json',
-  },
   timeout: 15000,
+})
+
+// Only attach Content-Type for requests that carry a JSON body.
+api.interceptors.request.use((config) => {
+  if (['post', 'put', 'patch'].includes(config.method?.toLowerCase())) {
+    config.headers['Content-Type'] = 'application/json'
+  }
+  return config
 })
 
 // Unwrap .data so callers receive the payload directly.

@@ -53,6 +53,16 @@ function RefreshIcon({ spinning }) {
   )
 }
 
+function CollectIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
 function DatabaseIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -126,6 +136,10 @@ export default function AppLayout({
   sourcesCount,
   onRefresh,
   refreshing,
+  onCollect,
+  collecting,
+  collectMessage,
+  collectPhase,
   children,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -175,10 +189,29 @@ export default function AppLayout({
                 {sourcesCount} source{sourcesCount !== 1 ? 's' : ''}
               </span>
             )}
+
+            {/* Collect Data — shows live status while running */}
+            {collecting ? (
+              <span className="topbar__collecting">
+                <RefreshIcon spinning />
+                <span>{collectMessage || 'Collecting…'}</span>
+              </span>
+            ) : (
+              <button
+                className="topbar__collect-btn"
+                onClick={onCollect}
+                title={collectPhase === 'error' ? 'Last collection failed — click to retry' : 'Run a new data collection'}
+              >
+                <CollectIcon />
+                <span>{collectPhase === 'error' ? 'Retry Collection' : 'Collect Data'}</span>
+              </button>
+            )}
+
+            {/* Refresh analytics from DB */}
             <button
               className="topbar__refresh-btn"
               onClick={onRefresh}
-              disabled={refreshing}
+              disabled={refreshing || collecting}
             >
               <RefreshIcon spinning={refreshing} />
               <span>{refreshing ? 'Refreshing…' : 'Refresh'}</span>

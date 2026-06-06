@@ -84,8 +84,10 @@ class BaseScraper(ABC):
 
     def __init__(self, session: Optional[requests.Session] = None) -> None:
         self.logger = logging.getLogger(f"scraper.{self.SOURCE_NAME}")
-        # Allow session injection for testing; built lazily otherwise.
         self._session = session
+        # Populated by _fetch() so subclasses can include them in log summaries.
+        self._last_http_status: Optional[int] = None
+        self._last_response_bytes: int = 0
 
     # ------------------------------------------------------------------
     # Public interface
@@ -113,14 +115,23 @@ class BaseScraper(ABC):
 
         Returns None on any network or HTTP error so callers can
         decide whether to skip silently or raise.
+
+        Side-effects: sets self._last_http_status and
+        self._last_response_bytes so subclasses can include them in
+        their scrape-summary log without re-fetching.
         """
+        self._last_http_status = None
+        self._last_response_bytes = 0
         try:
             response = self.session.get(url, timeout=timeout)
+            self._last_http_status = response.status_code
+            self._last_response_bytes = len(response.content)
             response.raise_for_status()
             return response.text
         except requests.exceptions.Timeout:
             self.logger.error("Timeout fetching %s", url)
         except requests.exceptions.HTTPError as exc:
+            self._last_http_status = exc.response.status_code
             self.logger.error("HTTP %s for %s", exc.response.status_code, url)
         except requests.exceptions.RequestException as exc:
             self.logger.error("Request failed for %s: %s", url, exc)

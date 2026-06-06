@@ -56,7 +56,9 @@ _STOPWORDS: frozenset[str] = frozenset({
 })
 
 # ---------------------------------------------------------------------------
-# DB columns loaded for EDA — includes text for keyword analysis.
+# DB columns loaded for EDA.
+# summary is used for keyword extraction; article_text is no longer loaded
+# because the RSS pipeline does not fetch full article bodies.
 # ---------------------------------------------------------------------------
 
 _EDA_COLS = [
@@ -65,7 +67,7 @@ _EDA_COLS = [
     Article.category,
     Article.published_date,
     Article.title,
-    Article.article_text,
+    Article.summary,
 ]
 
 
@@ -106,9 +108,11 @@ class EDAService:
         if df.empty:
             return KeywordReport(total_articles_analyzed=0, unique_keywords=0, items=[])
 
-        # Prefer article_text; fall back to title for articles without body.
-        text_col = df["article_text"].where(df["article_text"].notna(), df["title"])
-        corpus = " ".join(text_col.fillna(""))
+        # Combine title + summary for keyword extraction.
+        # The RSS pipeline populates summary from the feed description;
+        # article_text is no longer fetched to avoid paywall issues.
+        text_col = df["title"].fillna("") + " " + df["summary"].fillna("")
+        corpus = " ".join(text_col)
 
         all_words = _WORD_RE.findall(corpus.lower())
         filtered = [w for w in all_words if w not in _STOPWORDS]
@@ -226,7 +230,7 @@ class EDAService:
 
         self._df = pd.DataFrame(
             rows or [],
-            columns=["id", "source", "category", "published_date", "title", "article_text"],
+            columns=["id", "source", "category", "published_date", "title", "summary"],
         )
         logger.debug("EDA DataFrame loaded: %d rows", len(self._df))
         return self._df
