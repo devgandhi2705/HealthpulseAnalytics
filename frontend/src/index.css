@@ -912,7 +912,7 @@ img { display: block; max-width: 100%; }
 
 .articles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
   gap: var(--s4);
 }
 
@@ -1002,7 +1002,7 @@ img { display: block; max-width: 100%; }
 
 .search-input-wrap {
   flex: 1;
-  min-width: 240px;
+  min-width: min(240px, 100%);
   position: relative;
 }
 .search-input-wrap svg {
@@ -1241,12 +1241,14 @@ img { display: block; max-width: 100%; }
   .sidebar--open { transform: translateX(0); }
   .sidebar-overlay { display: block; }
   .topbar__hamburger { display: flex; }
-  .topbar { padding: 0 var(--s4); }
+  .topbar { padding: 0 var(--s4); gap: var(--s2); }
   .page-content { padding: var(--s4); }
+  .page-title { font-size: 1.3rem; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: var(--s3); }
   .insight-grid { grid-template-columns: repeat(2, 1fr); }
   .articles-grid { grid-template-columns: 1fr; }
   .topbar__brand-tag { display: none; }
+  .section { margin-bottom: var(--s6); }
 }
 
 @media (max-width: 480px) {
@@ -1254,4 +1256,20 @@ img { display: block; max-width: 100%; }
   .insight-grid { grid-template-columns: 1fr; }
   .ob-card { padding: var(--s8) var(--s5); }
   .ob-title { font-size: 1.3rem; }
+  /* Topbar: icon-only buttons free up space for the brand name */
+  .topbar__chip { display: none; }
+  .topbar__collect-btn span,
+  .topbar__refresh-btn span { display: none; }
+  .topbar__collect-btn,
+  .topbar__refresh-btn { padding: var(--s2); width: 36px; height: 36px; justify-content: center; }
+  /* Keyword chart: narrower label column on phones */
+  .keyword-row__word { width: 80px; }
+  /* Pagination: wrap onto multiple rows if needed */
+  .pagination { flex-wrap: wrap; }
+  /* Toolbar filters can shrink freely */
+  .explorer-toolbar { gap: var(--s2); }
+  .filter-select { flex: 1; min-width: 0; }
+  /* Tighter panel & section spacing */
+  .panel { padding: var(--s4); }
+  .section { margin-bottom: var(--s5); }
 }

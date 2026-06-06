@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // ---- Inline SVG icons -------------------------------------------------------
 
@@ -143,6 +143,11 @@ export default function AppLayout({
   children,
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [mobileOpen])
 
   function navigate(id) {
     onNavigate(id)
